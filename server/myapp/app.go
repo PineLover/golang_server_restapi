@@ -20,7 +20,7 @@ func (f *fooHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(user)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, err)
+		fmt.Fprint(w, "Bad Request: ", err)
 		return
 	}
 	user.CreatedAt = time.Now()
