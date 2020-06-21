@@ -1,82 +1,42 @@
 package myapp
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
-
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
 )
 
-func TestIndexPathHandler(t *testing.T) {
+func TestIndex(t *testing.T){
 	assert := assert.New(t)
 
-	res := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/", nil)
+	ts := httptest.NewServer(NewHandler())
 
-	mux := NewHttpHandler()
-	mux.ServeHTTP(res, req)
+	defer ts.Close()
 
-	assert.Equal(http.StatusOK, res.Code)
-	data, _ := ioutil.ReadAll(res.Body)
+	resp, err := http.Get(ts.URL)
+	assert.NoError(err)
+	assert.Equal(http.StatusOK,resp.StatusCode)
+
+	data, _ := ioutil.ReadAll(resp.Body)
 	assert.Equal("Hello World", string(data))
+
 }
 
-func TestBarPathHandler_WithoutName(t *testing.T) {
+func TestUsers(t * testing.T) {
 	assert := assert.New(t)
 
-	res := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/bar", nil)
+	ts := httptest.NewServer(NewHandler())
 
-	mux := NewHttpHandler()
-	mux.ServeHTTP(res, req)
+	defer ts.Close()
 
-	assert.Equal(http.StatusOK, res.Code)
-	data, _ := ioutil.ReadAll(res.Body)
-	assert.Equal("Hello World!!", string(data))
-}
+	resp, err := http.Get(ts.URL + "/users")
+	assert.NoError(err)
+	assert.Equal(http.StatusOK,resp.StatusCode)
+	data , _ := ioutil.ReadAll(resp.Body)
 
-func TestBarPathHandler_WithName(t *testing.T) {
-	assert := assert.New(t)
+	//assert.Equal("Hello World",string(data))
+	assert.Contains(string(data),"Get UserInfo")
 
-	res := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/bar?name=tucker", nil)
-
-	mux := NewHttpHandler()
-	mux.ServeHTTP(res, req)
-
-	assert.Equal(http.StatusOK, res.Code)
-	data, _ := ioutil.ReadAll(res.Body)
-	assert.Equal("Hello tucker!!", string(data))
-}
-
-func TestFooHandler_withoutJson(t *testing.T) {
-	assert := assert.New(t)
-
-	res := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/foo", nil)
-
-	mux := NewHttpHandler()
-	mux.ServeHTTP(res, req)
-	assert.Equal(http.StatusBadRequest, res.Code)
-}
-
-func TestFooHandler_withJson(t *testing.T) {
-	assert := assert.New(t)
-
-	res := httptest.NewRecorder()
-	req := httptest.NewRequest("POST", "/foo", strings.NewReader(`{"first_name":"tucker", "last_name":"kim","email":"tucker@naver.com"}`))
-
-	mux := NewHttpHandler()
-	mux.ServeHTTP(res, req)
-	assert.Equal(http.StatusCreated, res.Code)
-
-	user := new(User)
-	err := json.NewDecoder(res.Body).Decode(user)
-	assert.Nil(err)
-	assert.Equal("tucker", user.FirstName)
-	assert.Equal("kim", user.LastName)
 }
